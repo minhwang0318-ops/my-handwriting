@@ -5,7 +5,10 @@ export default function Home() {
   return (
     <main style={{ padding: 24, maxWidth: 640, margin: "0 auto" }}>
       <h1 style={{ fontSize: "1.5rem" }}>내 손글씨</h1>
-      <p>개발 중입니다.</p>
+      <p style={{ background: "#fff7e8", border: "1px solid #f0d49a", borderRadius: 10, padding: "10px 12px", fontSize: "0.92rem", lineHeight: 1.55 }}>
+        글씨 등록(따라 쓰기)은 <b>아이패드나 휴대폰</b>에서 하는 걸 추천해요. 애플 펜슬이나 손가락으로 써야 실제 손글씨와 가장 비슷하게 나와요.
+        사파리에서 이 주소를 열고 공유 → &ldquo;홈 화면에 추가&rdquo;를 누르면 앱처럼 설치돼요.
+      </p>
       <ul style={{ lineHeight: 2 }}>
         <li>
           <Link href="/write">내 글씨 등록하기 (따라 쓰기)</Link>

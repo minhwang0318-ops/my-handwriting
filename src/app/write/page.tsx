@@ -62,6 +62,8 @@ export default function WritePage() {
   const [toast, setToast] = useState("");
   const [cfg, setCfg] = useState<ValidateConfig>(DEFAULT_VALIDATE);
   const [trackpad, setTrackpad] = useState(false);
+  /** 터치가 없는 기기(맥북·PC): 아이패드·폰을 추천하는 안내를 띄운다 */
+  const [noTouch, setNoTouch] = useState(false);
   const [penDown, setPenDown] = useState(false);
   const size = useCellSize();
 
@@ -76,11 +78,9 @@ export default function WritePage() {
       const m = await loadMasks();
       await loadRefFont(m.frame);
       setCfg(mergeValidate(await getSetting<unknown>("validateConfig", null)));
-      // 트랙패드 모드: 저장된 값이 없으면, 터치가 없고 마우스·트랙패드만 있는 기기(맥북 등)에서 켠다
-      const savedPad = await getSetting<boolean | null>("trackpadMode", null);
-      setTrackpad(
-        savedPad ?? (window.matchMedia("(hover: hover) and (pointer: fine)").matches && navigator.maxTouchPoints === 0),
-      );
+      // 터치가 없는 기기에서는 아이패드·폰을 추천한다. 트랙패드 모드는 직접 켰을 때만 쓴다.
+      setNoTouch(navigator.maxTouchPoints === 0 && !window.matchMedia("(pointer: coarse)").matches);
+      setTrackpad((await getSetting<boolean | null>("trackpadMode", null)) ?? false);
       setMasks(m);
     })();
   }, []);
@@ -269,6 +269,17 @@ export default function WritePage() {
             </div>
           )}
 
+          {noTouch && (
+            <div className={styles.recommend}>
+              <b>글씨 등록은 아이패드나 휴대폰에서 하는 걸 추천해요.</b>
+              <br />
+              애플 펜슬이나 손가락으로 쓰는 게 실제 손글씨와 가장 비슷하게 나와요. 휴대폰·아이패드 사파리에서 이 주소를 열면 돼요:{" "}
+              <span className={styles.url}>{typeof window !== "undefined" ? window.location.origin + window.location.pathname : ""}</span>
+              <br />
+              맥북에서는 <Link href="/upload">사진 올리기</Link>와 <Link href="/convert">변환</Link>이 편해요. 등록한 글씨는 설정의 내보내기/가져오기로 옮길 수 있어요.
+            </div>
+          )}
+
           <div className={styles.padBar}>
             <label>
               <input
@@ -279,7 +290,7 @@ export default function WritePage() {
                   setSetting("trackpadMode", e.target.checked);
                 }}
               />{" "}
-              트랙패드로 쓰기 (맥북)
+              트랙패드로 쓰기 (맥북, 어색할 수 있어요)
             </label>
             {trackpad && <span className={penDown ? styles.penOn : styles.penOff}>{penDown ? "● 펜 내림 (쓰는 중)" : "○ 펜 올림"}</span>}
           </div>
