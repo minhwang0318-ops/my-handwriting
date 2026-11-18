@@ -13,6 +13,8 @@ import { exportPdf } from "@/lib/render/pdf";
 import { loadBoxes, loadMasks } from "@/lib/regions/client";
 import { makeBoxFn } from "@/lib/compose/client";
 import type { BoxFn } from "@/lib/compose/compose";
+import NavBar from "@/components/NavBar";
+import Icon from "@/components/Icon";
 import styles from "./page.module.css";
 
 const SAMPLE_TEXT = "안녕하세요. 오늘은 날씨가 좋네요.\n내 손글씨로 쓴 편지입니다.";
@@ -128,9 +130,10 @@ export default function ConvertPage() {
   };
 
   const m = (k: keyof PageSetup["margin"]) => (
-    <label className={styles.num}>
-      {{ top: "위", right: "오른쪽", bottom: "아래", left: "왼쪽" }[k]}
+    <label className="cell" key={k}>
+      <span className="cell-main">{{ top: "위 여백", right: "오른쪽 여백", bottom: "아래 여백", left: "왼쪽 여백" }[k]}</span>
       <input
+        className="field-inline"
         type="number"
         inputMode="decimal"
         min={5}
@@ -138,97 +141,124 @@ export default function ConvertPage() {
         value={margin[k]}
         onChange={(e) => setMargin({ ...margin, [k]: Math.max(5, Math.min(60, Number(e.target.value) || 0)) })}
       />
+      <span className="cell-value">mm</span>
+    </label>
+  );
+
+  const toggle = (label: string, sub: string | null, value: boolean, set: (v: boolean) => void) => (
+    <label className="cell">
+      <span className="cell-main">
+        {label}
+        {sub && <span className="cell-sub">{sub}</span>}
+      </span>
+      <input type="checkbox" className="switch" checked={value} onChange={(e) => set(e.target.checked)} />
     </label>
   );
 
   return (
-    <main className={styles.main}>
-      <Link href="/" className={styles.home}>
-        ‹ 처음
-      </Link>
-      <h1>내 글씨로 바꾸기</h1>
+    <>
+      <NavBar />
+      <main className="page">
+        <h1 className="large-title">내 글씨로 바꾸기</h1>
 
-      {samples && source.count === 0 && (
-        <p className={styles.warn}>
-          아직 등록한 글자가 없어요. <Link href="/write">따라 쓰기</Link>에서 먼저 글자를 써 주세요.
-        </p>
-      )}
-
-      <textarea
-        className={styles.text}
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        placeholder="바꿀 글을 붙여 넣으세요"
-        rows={6}
-      />
-
-      <div className={styles.options}>
-        <label>
-          종이
-          <select value={paper} onChange={(e) => setPaper(e.target.value as PaperKind)}>
-            <option value="lined">줄노트</option>
-            <option value="grid">모눈</option>
-            <option value="blank">백지</option>
-          </select>
-        </label>
-        <span className={styles.paperSize}>A4</span>
-        <fieldset className={styles.margins}>
-          <legend>여백 (mm)</legend>
-          {m("top")}
-          {m("bottom")}
-          {m("left")}
-          {m("right")}
-        </fieldset>
-      </div>
-
-      {result && result.missing.length > 0 && (
-        <div className={styles.missing}>
-          <div>
-            <strong>없는 글자 {result.missing.length}개</strong> · 직접 쓴 적이 없고{useCompose ? " 자모 조합도 안 돼서" : ""} 비워 두었어요 (미리보기의 빨간 점선)
-          </div>
-          <div className={styles.missingChars}>{result.missing.join(" ")}</div>
-          <Link className={styles.writeNow} href={`/write?chars=${encodeURIComponent(result.missing.join(""))}`}>
-            지금 쓰기
-          </Link>
-        </div>
-      )}
-
-      <div className={styles.actions}>
-        <button onClick={() => setShuffle((s) => s + 1)}>다시 섞기</button>
-        <label className={styles.check}>
-          <input type="checkbox" checked={showMissing} onChange={(e) => setShowMissing(e.target.checked)} /> 없는 글자 표시
-        </label>
-        <label className={styles.check}>
-          <input type="checkbox" checked={useCompose} onChange={(e) => setUseCompose(e.target.checked)} /> 자모 조합 사용
-        </label>
-        <label className={styles.check}>
-          <input type="checkbox" checked={highlight} onChange={(e) => setHighlight(e.target.checked)} /> 조합 글자 파랗게 (미리보기만)
-        </label>
-        <button className={styles.primary} onClick={doPdf} disabled={!result || !glyphCount || !!busy}>
-          PDF 저장
-        </button>
-        <button className={styles.primary} onClick={doPng} disabled={!result || !glyphCount || !!busy}>
-          PNG 저장
-        </button>
-      </div>
-      {busy && <p className={styles.busy}>{busy}</p>}
-      {result && (
-        <p className={styles.stat}>
-          {result.pages.length}쪽 · 글자 {glyphCount}개 (그중 조합 {composedCount}개) · 직접 쓴 글자 종류 {source.count}개 ·{" "}
-          <Link href="/compare">조합 품질 비교</Link> · <Link href="/settings">스타일 조정</Link>
-        </p>
-      )}
-
-      <div ref={wrapRef} className={styles.pages}>
-        {result?.pages.map((p, i) => (
-          <div key={i}>
-            <PagePreview page={p} setup={setup} profile={profile} width={width} showMissing={showMissing} highlight={highlight} />
-            <div className={styles.pageNo}>
-              {i + 1} / {result.pages.length}
+        {samples && source.count === 0 && (
+          <div className="notice warn" style={{ margin: "8px 0 0" }}>
+            <div className="notice-title">
+              <Icon name="info" />
+              아직 등록한 글자가 없어요
             </div>
+            <Link href="/write">따라 쓰기</Link>나 <Link href="/upload">사진에서 가져오기</Link>로 먼저 글자를 등록해 주세요.
           </div>
-        ))}
-      </div>
-    </main>
+        )}
+
+        <section className="section" style={{ marginTop: 16 }}>
+          <h2 className="section-header">바꿀 글</h2>
+          <textarea className="field" value={text} onChange={(e) => setText(e.target.value)} placeholder="바꿀 글을 붙여 넣으세요" rows={6} />
+        </section>
+
+        {result && result.missing.length > 0 && (
+          <div className="notice error" style={{ marginTop: 16 }}>
+            <div className="notice-title">
+              <Icon name="warn" />
+              없는 글자 {result.missing.length}개
+            </div>
+            직접 쓴 적이 없고{useCompose ? " 자모 조합도 안 돼서" : ""} 비워 두었어요. 미리보기에서 빨간 점선으로 보여요.
+            <div className={styles.missingChars}>{result.missing.join(" ")}</div>
+            <Link className="btn primary small" href={`/write?chars=${encodeURIComponent(result.missing.join(""))}`}>
+              <Icon name="pen" />
+              지금 쓰기
+            </Link>
+          </div>
+        )}
+
+        <section className="section">
+          <h2 className="section-header">종이</h2>
+          <div className="group">
+            <div className="cell">
+              <span className="cell-main">종류</span>
+              <div className="segmented" role="group" aria-label="종이 종류">
+                {(["lined", "grid", "blank"] as PaperKind[]).map((k) => (
+                  <button key={k} aria-pressed={paper === k} onClick={() => setPaper(k)}>
+                    {{ lined: "줄노트", grid: "모눈", blank: "백지" }[k]}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="cell">
+              <span className="cell-main">크기</span>
+              <span className="cell-value">A4</span>
+            </div>
+            {m("top")}
+            {m("bottom")}
+            {m("left")}
+            {m("right")}
+          </div>
+        </section>
+
+        <section className="section">
+          <h2 className="section-header">글자</h2>
+          <div className="group">
+            {toggle("자모 조합 사용", "직접 쓴 적 없는 글자를 내 자모로 만들어요", useCompose, setUseCompose)}
+            {toggle("없는 글자 표시", "미리보기에만 빨간 점선", showMissing, setShowMissing)}
+            {toggle("조합 글자 파랗게", "미리보기에만 표시", highlight, setHighlight)}
+          </div>
+          <p className="section-footer">
+            <Link href="/compare">조합 품질 비교</Link> · <Link href="/settings">스타일 조정</Link>
+          </p>
+        </section>
+
+        <div className={styles.actions}>
+          <button className="btn gray" onClick={() => setShuffle((s) => s + 1)}>
+            <Icon name="shuffle" />
+            다시 섞기
+          </button>
+          <button className="btn primary" onClick={doPdf} disabled={!result || !glyphCount || !!busy}>
+            <Icon name="download" />
+            PDF 저장
+          </button>
+          <button className="btn" onClick={doPng} disabled={!result || !glyphCount || !!busy}>
+            <Icon name="download" />
+            PNG 저장
+          </button>
+        </div>
+        <p className={`footnote tnum ${styles.stat}`} role="status">
+          {busy ||
+            (result
+              ? `${result.pages.length}쪽 · 글자 ${glyphCount}개 (조합 ${composedCount}개) · 직접 쓴 글자 ${source.count}종`
+              : "")}
+        </p>
+
+        <div ref={wrapRef} className={styles.pages}>
+          {result?.pages.map((p, i) => (
+            <figure key={i} className={styles.figure}>
+              <PagePreview page={p} setup={setup} profile={profile} width={width} showMissing={showMissing} highlight={highlight} />
+              <figcaption className="footnote tnum">
+                {i + 1} / {result.pages.length}
+              </figcaption>
+            </figure>
+          ))}
+        </div>
+      </main>
+    </>
   );
 }

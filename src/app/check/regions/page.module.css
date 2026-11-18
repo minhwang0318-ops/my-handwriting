@@ -1,52 +1,33 @@
-.main {
-  padding: 16px;
-  max-width: 1100px;
-  margin: 0 auto;
-}
-.main h1 {
-  font-size: 1.3rem;
-  margin: 8px 0;
-}
-.main h2 {
-  font-size: 1.05rem;
-  margin: 28px 0 8px;
-}
 .legend {
   display: flex;
   gap: 16px;
-  font-weight: 600;
+  margin: 0 4px;
+  font-size: var(--t-sub);
+  color: var(--label-2);
 }
-.tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 12px 0;
+.legend span::before {
+  content: "";
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  margin-right: 6px;
 }
-.tabs button {
-  padding: 8px 12px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  background: #fff;
-  font-size: 0.95rem;
+.l1::before {
+  background: rgb(214, 69, 69);
 }
-.tabs .active {
-  background: #222;
-  color: #fff;
-  border-color: #222;
+.l2::before {
+  background: rgb(44, 112, 214);
 }
-.note {
-  color: #555;
-  font-size: 0.9rem;
+.l3::before {
+  background: rgb(40, 150, 80);
 }
 .gridWrap {
   overflow-x: auto;
   background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--paper-shadow);
 }
-.input {
-  width: 100%;
-  max-width: 480px;
-  padding: 8px 10px;
-  font-size: 1.1rem;
-  border: 1px solid #ccc;
-  border-radius: 8px;
+.gridWrap canvas {
+  display: block;
 }

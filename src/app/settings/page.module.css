@@ -1,129 +1,91 @@
-.main {
-  padding: 12px 16px 48px;
-  max-width: 720px;
-  margin: 0 auto;
-}
-.main h1 {
-  font-size: 1.3rem;
-  margin: 8px 0 12px;
-}
-.home {
-  text-decoration: none;
-  color: #555;
-  font-size: 0.95rem;
-}
-.card {
-  background: #fff;
-  border: 1px solid #e3e3e3;
-  border-radius: 12px;
-  padding: 12px 14px;
-  margin-bottom: 16px;
-}
-.card h2 {
-  font-size: 1.05rem;
-  margin: 0 0 4px;
-}
-.small {
-  font-size: 0.8rem;
-  color: #666;
-}
 .previewBox {
   position: sticky;
-  top: 0;
-  z-index: 2;
-  background: #fff;
-  padding: 6px 0 8px;
-  border-bottom: 1px solid #eee;
-  margin-bottom: 8px;
+  top: calc(44px + env(safe-area-inset-top) + 8px);
+  z-index: 5;
+  box-shadow: var(--shadow);
 }
 .preview {
   display: block;
-  border: 1px solid #ddd;
+  background: #fff;
   border-radius: 4px;
+  box-shadow: 0 0 0 0.5px var(--separator);
 }
-.row {
+.previewRow {
   display: flex;
-  flex-wrap: wrap;
   gap: 8px;
   align-items: center;
-  margin-top: 6px;
+  margin-top: 10px;
 }
-.row button,
-.reset,
-.danger,
-.primary {
-  min-height: 40px;
-  padding: 6px 14px;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  background: #fff;
-}
-.primary {
-  background: #1c2040;
-  border-color: #1c2040;
-  color: #fff;
-}
-.danger {
-  margin-top: 14px;
-  border-color: #d99;
-  color: #a22;
-}
-button:disabled {
-  opacity: 0.4;
-}
-.text {
-  flex: 1;
-  min-width: 180px;
-  font-size: 16px;
-  padding: 6px 8px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-}
-.group {
-  border-top: 1px solid #eee;
-  padding: 8px 0;
-}
-.group summary {
-  cursor: pointer;
-  padding: 4px 0;
-}
-.fields {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 10px 16px;
-  margin: 8px 0;
+.previewRow :global(.field) {
+  padding: 8px 12px;
 }
 .slider {
-  display: flex;
   flex-direction: column;
+  align-items: stretch;
   gap: 2px;
-  font-size: 0.88rem;
-}
-.slider input[type="range"] {
-  width: 100%;
-  height: 28px;
 }
 .sliderTop {
   display: flex;
   justify-content: space-between;
+  gap: 12px;
 }
-.reset {
-  margin-top: 6px;
+.slider input[type="range"] {
+  width: 100%;
+  height: 28px;
+  margin: 2px 0 0;
 }
-.importBox {
-  margin-top: 12px;
-  padding: 8px 10px;
-  border: 1px dashed #ccc;
-  border-radius: 8px;
-  font-size: 0.9rem;
+.disclosure summary {
+  list-style: none;
+  cursor: pointer;
 }
-.importBox input[type="file"] {
+.disclosure summary::-webkit-details-marker {
+  display: none;
+}
+.disclosureChevron {
+  transition: transform 200ms ease-out;
+}
+.disclosure[open] .disclosureChevron {
+  transform: rotate(90deg);
+}
+.disclosure[open] summary {
+  font-weight: 600;
+}
+.color {
+  width: 36px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  cursor: pointer;
+}
+.resetRow {
+  display: flex;
+  justify-content: center;
   margin-top: 8px;
 }
-.msg {
-  margin-top: 10px;
-  padding: 8px 10px;
-  background: #f1f6ff;
-  border-radius: 8px;
-  font-size: 0.9rem;
+.cellButton {
+  width: 100%;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: var(--t-body);
+  color: var(--accent);
+  text-align: left;
+  cursor: pointer;
+}
+.cellButton:hover:not(:disabled) {
+  background: var(--fill);
+}
+.cellButton:disabled {
+  color: var(--label-3);
+  cursor: default;
+}
+.cellButton:disabled :global(.cell-icon) {
+  color: var(--label-3);
+}
+.destructive {
+  color: var(--red-text);
+  justify-content: center;
+  text-align: center;
 }

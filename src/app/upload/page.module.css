@@ -1,106 +1,91 @@
-.main {
-  padding: 12px 16px 48px;
-  max-width: 960px;
-  margin: 0 auto;
+.narrow {
+  max-width: 680px;
 }
-.main h1 {
-  font-size: 1.3rem;
-  margin: 8px 0;
-}
-.home {
-  text-decoration: none;
-  color: #555;
-  font-size: 0.95rem;
-}
-.note {
-  font-size: 0.9rem;
-  color: #444;
-}
-.card {
-  background: #fff;
-  border: 1px solid #e3e3e3;
-  border-radius: 12px;
-  padding: 12px 14px;
-  margin-bottom: 16px;
-}
-.card h2 {
-  font-size: 1.05rem;
-  margin: 0 0 6px;
-}
-.small {
-  font-size: 0.8rem;
-  color: #666;
-}
-.row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+.step {
+  display: inline-flex;
   align-items: center;
-  margin-top: 8px;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--label-2);
+  color: var(--bg);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  vertical-align: 1px;
 }
-.row button {
-  min-height: 40px;
-  padding: 6px 14px;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  background: #fff;
-}
-.row .primary {
-  background: #1c2040;
-  border-color: #1c2040;
-  color: #fff;
-}
-.row button:disabled {
-  opacity: 0.4;
-}
-.slider {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.85rem;
+.rangeCell input[type="range"] {
+  flex: 1;
+  max-width: 260px;
 }
 .view {
-  margin-top: 10px;
+  margin-top: 12px;
+  border-radius: var(--radius);
   overflow: hidden;
+  background: #fff;
+  box-shadow: var(--paper-shadow);
 }
 .view canvas {
   display: block;
   max-width: 100%;
 }
-.text {
-  width: 100%;
-  font-size: 16px;
-  padding: 8px 10px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  font-family: inherit;
+.matchRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
 }
 .grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(176px, 1fr));
+  gap: 10px;
 }
 .item {
-  border: 1px solid #e3e3e3;
-  border-radius: 8px;
-  padding: 6px;
-  width: 168px;
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: opacity 150ms ease-out;
 }
 .off {
-  opacity: 0.55;
-  background: #fafafa;
+  opacity: 0.6;
 }
 .pair {
   display: flex;
-  gap: 6px;
+  gap: 8px;
+  justify-content: center;
+}
+.itemRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 .char {
-  width: 44px;
-  font-size: 18px;
+  width: 52px;
+  height: 40px;
+  font: inherit;
+  font-size: 20px;
   text-align: center;
-  padding: 2px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+  color: var(--label);
+  background: var(--fill);
+  border: none;
+  border-radius: var(--radius-sm);
+  outline: none;
+}
+.char:focus {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+.include {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--t-foot);
+  color: var(--label-2);
 }
 .empty {
   width: 72px;
@@ -108,36 +93,34 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.75rem;
-  color: #999;
-  border: 1px dashed #ccc;
-  border-radius: 4px;
+  font-size: var(--t-cap);
+  color: var(--label-3);
+  border-radius: 8px;
+  background: var(--fill);
 }
 .problem {
-  font-size: 0.72rem;
-  color: #b35b00;
-  margin-top: 4px;
+  font-size: var(--t-cap);
+  color: var(--orange-text);
+  line-height: 1.35;
 }
-.msg {
-  padding: 8px 10px;
-  background: #f1f6ff;
-  border-radius: 8px;
-  font-size: 0.9rem;
-}
-.editBtn {
-  margin-top: 6px;
-  width: 100%;
-  min-height: 34px;
-  border: 1px solid #e0b39a;
-  background: #fff7f2;
-  color: #a2471c;
-  border-radius: 8px;
-  font-size: 0.85rem;
+.saveBar {
+  position: sticky;
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 10px;
+  border-radius: 16px;
+  background: var(--bar);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
 }
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -147,4 +130,5 @@
 .sheet {
   max-height: 100%;
   overflow: auto;
+  border-radius: 14px;
 }

@@ -11,6 +11,7 @@ import { makeBoxFn } from "@/lib/compose/client";
 import { buildInventory, composeChar, ROLE_NAME, type BoxFn, type Composed } from "@/lib/compose/compose";
 import { compositionSet, frequentSet } from "@/lib/hangul/charsets";
 import { isSyllable } from "@/lib/hangul";
+import NavBar from "@/components/NavBar";
 import styles from "./page.module.css";
 
 type Filter = "all" | "frequent" | "composition";
@@ -85,39 +86,40 @@ export default function ComparePage() {
   const refFrame = showRef && frame ? frame : undefined;
 
   return (
-    <main className={styles.main}>
-      <Link href="/" className={styles.home}>
-        ‹ 처음
-      </Link>
-      <h1>조합 품질 비교</h1>
-      <p className={styles.note}>
-        왼쪽은 직접 쓴 글자, 오른쪽은 <strong>그 글자를 빼고</strong> 다른 글자에서 가져온 자모로 조합한 글자예요. 조합 글자는 직접 쓴 글자가 없을
-        때만 변환에 쓰입니다.
+    <>
+    <NavBar />
+    <main className="page wide">
+      <h1 className="large-title">조합 품질 비교</h1>
+      <p className="lede">
+        왼쪽은 직접 쓴 글자, 오른쪽은 <strong>그 글자를 빼고</strong> 다른 글자의 자모로 조합한 글자예요. 조합 글자는 직접 쓴 글자가 없을 때만 변환에 쓰여요.
       </p>
 
       <div className={styles.controls}>
-        {(Object.keys(FILTERS) as Filter[]).map((f) => (
-          <button key={f} className={f === filter ? styles.active : ""} onClick={() => setFilter(f)}>
-            {FILTERS[f]}
-          </button>
-        ))}
-        <label>
-          <input type="checkbox" checked={showRef} onChange={(e) => setShowRef(e.target.checked)} /> 기준 글자 깔기
+        <div className="segmented" role="group" aria-label="글자 범위">
+          {(Object.keys(FILTERS) as Filter[]).map((f) => (
+            <button key={f} aria-pressed={f === filter} onClick={() => setFilter(f)}>
+              {FILTERS[f]}
+            </button>
+          ))}
+        </div>
+        <label className={styles.ctl}>
+          기준 글자 깔기
+          <input type="checkbox" className="switch" checked={showRef} onChange={(e) => setShowRef(e.target.checked)} />
         </label>
-        <label>
+        <label className={styles.ctl}>
           크기
           <input type="range" min={64} max={160} value={size} onChange={(e) => setSize(Number(e.target.value))} />
         </label>
       </div>
 
-      {!samples && <p>불러오는 중…</p>}
+      {!samples && <p className="footnote">불러오는 중…</p>}
       {samples && pairs.length === 0 && (
-        <p className={styles.note}>
+        <p className="footnote" style={{ margin: "0 4px" }}>
           비교할 글자가 없어요. <Link href="/write">따라 쓰기</Link>에서 한글을 먼저 써 주세요.
         </p>
       )}
       {pairs.length > 0 && (
-        <p className={styles.note}>
+        <p className="footnote" style={{ margin: "0 4px" }}>
           {pairs.length}자 중 {composable}자를 조합할 수 있었어요. 조합이 안 된 글자는 필요한 자모를 가진 다른 글자가 아직 없는 경우예요.
         </p>
       )}
@@ -147,8 +149,8 @@ export default function ComparePage() {
         ))}
       </div>
 
-      <h2>아무 글자나 조합해 보기</h2>
-      <input className={styles.input} value={tryText} onChange={(e) => setTryText(e.target.value)} />
+      <h2 className={styles.h2}>아무 글자나 조합해 보기</h2>
+      <input className={`field ${styles.input}`} aria-label="조합해 볼 글자" value={tryText} onChange={(e) => setTryText(e.target.value)} />
       <div className={styles.grid}>
         {tryResults.map((r) => (
           <div key={r.char} className={styles.card}>
@@ -176,5 +178,6 @@ export default function ComparePage() {
         ))}
       </div>
     </main>
+    </>
   );
 }

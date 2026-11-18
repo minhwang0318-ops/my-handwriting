@@ -7,6 +7,7 @@ import type { JamoMasksFile } from "@/lib/regions/types";
 import {
   loadMasks, loadRefFont, loadBoxes, drawColoredGlyph, drawGlyph, boxesOf,
 } from "@/lib/regions/client";
+import NavBar from "@/components/NavBar";
 import styles from "./page.module.css";
 
 const COLORS: [number, number, number, number][] = [
@@ -115,47 +116,51 @@ export default function RegionsCheckPage() {
   const parts = first ? decompose(first)! : null;
 
   return (
-    <main className={styles.main}>
-      <h1>1단계 확인: 기준 글자 자모 영역</h1>
-      <p className={styles.legend}>
-        <span style={{ color: "rgb(214,69,69)" }}>■ 초성</span>
-        <span style={{ color: "rgb(44,112,214)" }}>■ 중성(모음)</span>
-        <span style={{ color: "rgb(40,150,80)" }}>■ 종성(받침)</span>
-      </p>
-      {!masks && <p>글꼴과 영역 데이터를 불러오는 중…</p>}
+    <>
+      <NavBar />
+      <main className="page wide">
+        <h1 className="large-title">기준 글자 자모 영역</h1>
+        <p className={styles.legend}>
+          <span className={styles.l1}>초성</span>
+          <span className={styles.l2}>중성(모음)</span>
+          <span className={styles.l3}>종성(받침)</span>
+        </p>
+        {!masks && <p className="footnote">글꼴과 영역 데이터를 불러오는 중…</p>}
 
-      <section>
-        <div className={styles.tabs}>
-          {(Object.keys(SETS) as SetKey[]).map((k) => (
-            <button key={k} className={k === setKey ? styles.active : ""} onClick={() => setSetKey(k)}>
-              {SETS[k].label} ({SETS[k].chars().length})
-            </button>
-          ))}
-        </div>
-        {stats && (
-          <p className={styles.note}>
-            브라우저가 그린 글자와 미리 계산한 영역의 겹침: 평균 {(stats.mean * 100).toFixed(1)}%
-            {" · "}가장 낮은 글자: {stats.worst.map(([c, v]) => `${c} ${(v * 100).toFixed(0)}%`).join(", ")}
-          </p>
-        )}
-        <div className={styles.gridWrap}>
-          <canvas ref={gridRef} />
-        </div>
-      </section>
+        <section className="section" style={{ marginTop: 16 }}>
+          <div className="segmented" role="group" aria-label="글자 묶음">
+            {(Object.keys(SETS) as SetKey[]).map((k) => (
+              <button key={k} aria-pressed={k === setKey} onClick={() => setSetKey(k)}>
+                {SETS[k].label}
+                <span className="count tnum">{SETS[k].chars().length}</span>
+              </button>
+            ))}
+          </div>
+          {stats && (
+            <p className="footnote tnum" style={{ margin: "10px 4px" }}>
+              브라우저가 그린 글자와 미리 계산한 영역의 겹침: 평균 {(stats.mean * 100).toFixed(1)}%
+              {" · "}가장 낮은 글자: {stats.worst.map(([c, v]) => `${c} ${(v * 100).toFixed(0)}%`).join(", ")}
+            </p>
+          )}
+          <div className={styles.gridWrap}>
+            <canvas ref={gridRef} />
+          </div>
+        </section>
 
-      <section>
-        <h2>자모 상자 (한글 11,172자, 조합 단계에서 사용)</h2>
-        <input className={styles.input} value={boxText} onChange={(e) => setBoxText(e.target.value)} />
-        {parts && first && (
-          <p className={styles.note}>
-            {first} = {CHO[parts.cho]} + {JUNG[parts.jung]} {parts.jong ? `+ ${JONG[parts.jong]}` : "(받침 없음)"} · 배치:{" "}
-            {{ vertical: "세로형", horizontal: "가로형", mixed: "섞임형" }[layoutOf(parts.jung)]}
-          </p>
-        )}
-        <div className={styles.gridWrap}>
-          <canvas ref={boxRef} />
-        </div>
-      </section>
-    </main>
+        <section className="section">
+          <h2 className="section-header">자모 상자 · 한글 11,172자, 조합 단계에서 사용</h2>
+          <input className="field" style={{ maxWidth: 480 }} aria-label="확인할 글자" value={boxText} onChange={(e) => setBoxText(e.target.value)} />
+          {parts && first && (
+            <p className="section-footer">
+              {first} = {CHO[parts.cho]} + {JUNG[parts.jung]} {parts.jong ? `+ ${JONG[parts.jong]}` : "(받침 없음)"} · 배치:{" "}
+              {{ vertical: "세로형", horizontal: "가로형", mixed: "섞임형" }[layoutOf(parts.jung)]}
+            </p>
+          )}
+          <div className={styles.gridWrap} style={{ marginTop: 12 }}>
+            <canvas ref={boxRef} />
+          </div>
+        </section>
+      </main>
+    </>
   );
 }

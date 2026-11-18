@@ -68,7 +68,7 @@ export default function BoxEditor({ src, rect, others, lineHeight, char, onApply
     const toC = (x: number, y: number) => [(x - v.x0) * s, (y - v.y0) * s];
     // 다른 상자: 흐린 점선
     ctx.setLineDash([4 * dpr, 4 * dpr]);
-    ctx.strokeStyle = "rgba(60,90,200,0.5)";
+    ctx.strokeStyle = "rgba(0,122,255,0.55)";
     ctx.lineWidth = dpr;
     for (const o of others) {
       const [a, b] = toC(o.x0, o.y0);
@@ -83,12 +83,12 @@ export default function BoxEditor({ src, rect, others, lineHeight, char, onApply
     ctx.fillRect(0, y1, cv.width, cv.height - y1);
     ctx.fillRect(0, y0, x0, y1 - y0);
     ctx.fillRect(x1, y0, cv.width - x1, y1 - y0);
-    ctx.strokeStyle = "#e05a2b";
+    ctx.strokeStyle = "#ff9500";
     ctx.lineWidth = 2 * dpr;
     ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
     // 손잡이
     const hs = 9 * dpr;
-    ctx.fillStyle = "#e05a2b";
+    ctx.fillStyle = "#ff9500";
     for (const [hx, hy] of [
       [x0, y0], [(x0 + x1) / 2, y0], [x1, y0],
       [x0, (y0 + y1) / 2], [x1, (y0 + y1) / 2],
@@ -170,39 +170,30 @@ export default function BoxEditor({ src, rect, others, lineHeight, char, onApply
   };
 
   return (
-    <div className="box-editor" style={{ background: "#fff", border: "2px solid #e05a2b", borderRadius: 12, padding: 12 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-        <strong>&lsquo;{char || "?"}&rsquo; 상자 고치기</strong>
-        <span style={{ fontSize: "0.8rem", color: "#666" }}>모서리·변을 끌면 크기, 안쪽을 끌면 위치가 바뀌어요</span>
+    <div style={{ background: "var(--surface)", borderRadius: 14, padding: 16, boxShadow: "0 12px 40px rgba(0,0,0,0.25)" }}>
+      <div style={{ marginBottom: 10 }}>
+        <strong style={{ fontSize: "var(--t-headline)" }}>&lsquo;{char || "?"}&rsquo; 상자 고치기</strong>
+        <p className="footnote">모서리·변을 끌면 크기, 안쪽을 끌면 위치가 바뀌어요.</p>
       </div>
       <canvas
         ref={ref}
-        style={{ width, height, display: "block", touchAction: "none", borderRadius: 6 }}
+        style={{ width, height, display: "block", touchAction: "none", borderRadius: 8 }}
         onPointerDown={onDown}
         onPointerMove={onMove}
         onPointerUp={onUp}
         onPointerCancel={onUp}
       />
-      <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
-        <button onClick={() => onApply(r)} style={btn(true)}>
-          적용
-        </button>
-        <button onClick={() => setR(rect)} style={btn(false)}>
+      <div className="btn-row" style={{ marginTop: 12, justifyContent: "flex-end" }}>
+        <button className="btn plain" onClick={() => setR(rect)}>
           처음 상자로
         </button>
-        <button onClick={onCancel} style={btn(false)}>
+        <button className="btn gray" onClick={onCancel}>
           취소
+        </button>
+        <button className="btn primary" onClick={() => onApply(r)}>
+          적용
         </button>
       </div>
     </div>
   );
 }
-
-const btn = (primary: boolean): React.CSSProperties => ({
-  minHeight: 40,
-  padding: "6px 14px",
-  borderRadius: 10,
-  border: `1px solid ${primary ? "#1c2040" : "#ccc"}`,
-  background: primary ? "#1c2040" : "#fff",
-  color: primary ? "#fff" : "#222",
-});

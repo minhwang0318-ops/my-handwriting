@@ -3,7 +3,6 @@
 // 1) 사진 → 글씨만 흑백으로 (괘선 지움)  2) 줄·글자 덩어리 찾기  3) 타이핑한 내용과 짝 짓기
 // 4) 확인·고치기  5) 획으로 바꿔 저장
 import { useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
 import SampleThumb from "@/components/SampleThumb";
 import BoxEditor, { type Rect } from "@/components/BoxEditor";
 import { toGray, adaptiveThreshold, removeLongLines, connectedComponents, type BinMask } from "@/lib/photo/image";
@@ -18,6 +17,8 @@ import { isSyllable } from "@/lib/hangul";
 import type { Sample } from "@/lib/strokes/types";
 import { getSetting, newId, setSetting, writeBulk } from "@/lib/store/db";
 import { mergeProfile } from "@/lib/style/profile";
+import NavBar from "@/components/NavBar";
+import Icon from "@/components/Icon";
 import styles from "./page.module.css";
 
 const MAX_SIDE = 1800;
@@ -38,7 +39,7 @@ interface Processed {
   lines: { boxes: Box[]; height: number; cy: number }[];
 }
 
-function process(src: HTMLCanvasElement, sensitivity: number): Processed {
+function processImage(src: HTMLCanvasElement, sensitivity: number): Processed {
   const ctx = src.getContext("2d", { willReadFrequently: true })!;
   const { width: w, height: h } = src;
   const img = ctx.getImageData(0, 0, w, h);
@@ -70,7 +71,7 @@ function Crop({ src, box, size = 72 }: { src: HTMLCanvasElement; box: Box; size?
     const sy = (box.y0 + box.y1) / 2 - side / 2;
     ctx.drawImage(src, sx, sy, side, side, 0, 0, cv.width, cv.height);
   }, [src, box, size]);
-  return <canvas ref={ref} style={{ width: size, height: size, border: "1px solid #ddd", borderRadius: 4 }} />;
+  return <canvas ref={ref} style={{ width: size, height: size, borderRadius: 8, boxShadow: "0 0 0 0.5px var(--separator)", display: "block" }} />;
 }
 
 export default function UploadPage() {
@@ -126,7 +127,7 @@ export default function UploadPage() {
     setSrc(cv);
   };
 
-  const proc = useMemo(() => (src ? process(src, sensitivity) : null), [src, sensitivity]);
+  const proc = useMemo(() => (src ? processImage(src, sensitivity) : null), [src, sensitivity]);
   const typedLines = useMemo(() => text.split("\n").map((l) => l.trimEnd()).filter((l) => textChars(l).length), [text]);
 
   // 미리보기: 사진 + 잡힌 잉크 + 줄·글자 상자
@@ -156,7 +157,7 @@ export default function UploadPage() {
       octx.putImageData(id, 0, 0);
       ctx.drawImage(ov, 0, 0, cv.width, cv.height);
     }
-    const colors = ["#e05a2b", "#2c64c8", "#23864a", "#9b3fb5"];
+    const colors = ["#ff9500", "#007aff", "#34c759", "#af52de"];
     const lineBoxes = items ? groupBy(items) : proc.lines.map((l) => l.boxes);
     lineBoxes.forEach((boxes, li) => {
       ctx.strokeStyle = colors[li % colors.length];
@@ -254,123 +255,152 @@ export default function UploadPage() {
   const included = items?.filter((it) => it.include && it.sample).length ?? 0;
 
   return (
-    <main className={styles.main}>
-      <Link href="/" className={styles.home}>
-        ‹ 처음
-      </Link>
-      <h1>사진에서 내 글씨 가져오기</h1>
-      <p className={styles.note}>
-        예전에 쓴 편지나 레포트 사진을 올리고, 그 사진에 쓴 내용을 타이핑하면 글자마다 짝을 지어 내 글씨로 저장해요. 사진에는 쓴 순서와 필압이
-        없어서, 따라 쓰기로 저장한 글자보다 품질이 낮을 수 있어요.
-      </p>
-
-      <section className={styles.card}>
-        <h2>1. 사진 고르기</h2>
-        <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && loadFile(e.target.files[0])} />
-        <p className={styles.small}>글씨가 크고 반듯하게 찍힌 사진이 좋아요. 사진은 이 기기 안에서만 처리하고 어디에도 올리지 않아요.</p>
-        {src && (
-          <div className={styles.row}>
-            <button onClick={() => rotate(-1)}>↺ 돌리기</button>
-            <button onClick={() => rotate(1)}>↻ 돌리기</button>
-            <label className={styles.slider}>
-              잉크 감도 {sensitivity}
-              <input type="range" min={4} max={40} value={sensitivity} onChange={(e) => setSensitivity(Number(e.target.value))} />
-            </label>
-            <label>
-              <input type="checkbox" checked={showMask} onChange={(e) => setShowMask(e.target.checked)} /> 잡힌 글씨 보기
-            </label>
-          </div>
-        )}
-        {src && proc && (
-          <p className={styles.small}>
-            찾은 줄 {proc.lines.length}개 · 글자 덩어리 {proc.lines.reduce((a, l) => a + l.boxes.length, 0)}개 (색깔 상자 = 줄마다 다른 색)
+    <>
+      <NavBar />
+      <main className="page wide">
+        <div className={styles.narrow}>
+          <h1 className="large-title">사진에서 가져오기</h1>
+          <p className="lede">
+            예전에 쓴 편지나 레포트 사진을 올리고 그 내용을 타이핑하면, 글자마다 짝을 지어 내 글씨로 저장해요. 사진에는 쓴 순서와 필압이 없어서 따라 쓰기로 저장한 글자보다 품질이 낮을 수 있어요.
           </p>
-        )}
-        <div className={styles.view}>
-          <canvas ref={viewRef} />
         </div>
-      </section>
 
-      {src && (
-        <section className={styles.card}>
-          <h2>2. 사진에 쓴 내용 입력</h2>
-          <p className={styles.small}>사진의 줄 바꿈과 똑같이 한 줄씩 입력해 주세요. 띄어쓰기도 사진대로 넣으면 띄어쓰기 폭을 잴 수 있어요.</p>
-          <textarea className={styles.text} rows={6} value={text} onChange={(e) => setText(e.target.value)} placeholder={"예)\n오늘은 날씨가 좋다.\n친구와 산책을 했다."} />
-          <div className={styles.row}>
-            <span className={styles.small}>
-              입력한 줄 {typedLines.length}개 / 사진에서 찾은 줄 {proc?.lines.length ?? 0}개
-            </span>
-            <button className={styles.primary} onClick={match} disabled={!typedLines.length || !masks}>
-              짝 짓기
-            </button>
-          </div>
-        </section>
-      )}
-
-      {items && (
-        <section className={styles.card}>
-          <h2>3. 확인하고 고치기</h2>
-          <p className={styles.small}>
-            왼쪽은 사진, 오른쪽은 획으로 바꾼 모습이에요. 글자가 틀리면 고치고, 잘못 잘린 칸은 체크를 빼 주세요. 기준과 많이 다른 칸은 처음부터 빠져 있어요.
-          </p>
-          <div className={styles.grid}>
-            {items.map((it) => (
-              <div key={it.key} className={`${styles.item} ${it.include ? "" : styles.off}`}>
-                <div className={styles.pair}>
-                  <Crop src={src!} box={it.box} />
-                  {it.sample ? <SampleThumb sample={it.sample} size={72} /> : <div className={styles.empty}>획 없음</div>}
+        <section className="section">
+          <h2 className="section-header">
+            <span className={styles.step}>1</span>사진 고르기
+          </h2>
+          <div className="group">
+            <div className="cell">
+              <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && loadFile(e.target.files[0])} />
+            </div>
+            {src && (
+              <>
+                <div className="cell">
+                  <span className="cell-main">방향</span>
+                  <button className="btn gray small" onClick={() => rotate(-1)} aria-label="왼쪽으로 돌리기">
+                    <Icon name="rotateL" />
+                  </button>
+                  <button className="btn gray small" onClick={() => rotate(1)} aria-label="오른쪽으로 돌리기">
+                    <Icon name="rotateR" />
+                  </button>
                 </div>
-                <div className={styles.row}>
-                  <input className={styles.char} value={it.char} onChange={(e) => editChar(it.key, e.target.value)} />
-                  <label className={styles.small}>
-                    <input
-                      type="checkbox"
-                      checked={it.include}
-                      disabled={!it.sample}
-                      onChange={(e) => setItems((p) => p!.map((x) => (x.key === it.key ? { ...x, include: e.target.checked } : x)))}
-                    />{" "}
-                    저장
-                  </label>
-                </div>
-                <button className={styles.editBtn} onClick={() => setEditing(it.key)}>
-                  상자 고치기
-                </button>
-                {it.problem && <div className={styles.problem}>{it.problem}</div>}
-              </div>
-            ))}
-          </div>
-          <div className={styles.row}>
-            <button className={styles.primary} onClick={save} disabled={!included}>
-              {included}자 저장
-            </button>
-            {spacing && (spacing.charGap !== null || spacing.wordGap !== null) && (
-              <button onClick={applySpacing}>
-                사진에서 잰 간격을 스타일에 적용 (글자 간격 {spacing.charGap !== null ? (spacing.charGap * EM_FILL).toFixed(3) : "-"}, 띄어쓰기{" "}
-                {spacing.wordGap !== null ? (spacing.wordGap * EM_FILL).toFixed(2) : "-"})
-              </button>
+                <label className={`cell ${styles.rangeCell}`}>
+                  <span className="cell-main">잉크 감도</span>
+                  <input type="range" min={4} max={40} value={sensitivity} onChange={(e) => setSensitivity(Number(e.target.value))} />
+                  <span className="cell-value tnum">{sensitivity}</span>
+                </label>
+                <label className="cell">
+                  <span className="cell-main">잡힌 글씨만 보기</span>
+                  <input type="checkbox" className="switch" checked={showMask} onChange={(e) => setShowMask(e.target.checked)} />
+                </label>
+              </>
             )}
           </div>
-        </section>
-      )}
-      {msg && <p className={styles.msg}>{msg}</p>}
-
-      {editItem && src && proc && (
-        <div className={styles.overlay} onClick={(e) => e.target === e.currentTarget && setEditing(null)}>
-          <div className={styles.sheet}>
-            <BoxEditor
-              key={editItem.key}
-              src={src}
-              rect={editItem.box}
-              others={items!.filter((x) => x.line === editItem.line && x.key !== editItem.key).map((x) => x.box)}
-              lineHeight={proc.lines[editItem.line].height}
-              char={editItem.char}
-              onApply={(r) => applyBox(editItem.key, r)}
-              onCancel={() => setEditing(null)}
-            />
+          <p className="section-footer">
+            {src && proc
+              ? `찾은 줄 ${proc.lines.length}개 · 글자 덩어리 ${proc.lines.reduce((a, l) => a + l.boxes.length, 0)}개. 줄마다 상자 색이 달라요.`
+              : "글씨가 크고 반듯하게 찍힌 사진이 좋아요. 사진은 이 기기 안에서만 처리하고 어디에도 올리지 않아요."}
+          </p>
+          <div className={styles.view} hidden={!src}>
+            <canvas ref={viewRef} />
           </div>
-        </div>
-      )}
-    </main>
+        </section>
+
+        {src && (
+          <section className="section">
+            <h2 className="section-header">
+              <span className={styles.step}>2</span>사진에 쓴 내용
+            </h2>
+            <textarea className="field" rows={6} value={text} onChange={(e) => setText(e.target.value)} placeholder={"예)\n오늘은 날씨가 좋다.\n친구와 산책을 했다."} />
+            <p className="section-footer">사진의 줄 바꿈과 똑같이 한 줄씩 입력해 주세요. 띄어쓰기도 사진대로 넣으면 띄어쓰기 폭을 잴 수 있어요.</p>
+            <div className={styles.matchRow}>
+              <span className="footnote tnum">
+                입력한 줄 {typedLines.length}개 · 사진에서 찾은 줄 {proc?.lines.length ?? 0}개
+              </span>
+              <button className="btn primary" onClick={match} disabled={!typedLines.length || !masks}>
+                짝 짓기
+              </button>
+            </div>
+          </section>
+        )}
+
+        {msg && (
+          <div className="notice info" role="status" style={{ marginTop: 16 }}>
+            {msg}
+          </div>
+        )}
+
+        {items && (
+          <section className="section">
+            <h2 className="section-header">
+              <span className={styles.step}>3</span>확인하고 고치기
+            </h2>
+            <p className="section-footer" style={{ margin: "0 16px 10px" }}>
+              왼쪽은 사진, 오른쪽은 획으로 바꾼 모습이에요. 글자가 틀리면 고치고, 잘못 잘린 칸은 저장을 끄거나 상자를 고쳐 주세요. 기준과 많이 다른 칸은 처음부터 꺼져 있어요.
+            </p>
+            <div className={styles.grid}>
+              {items.map((it) => (
+                <div key={it.key} className={`${styles.item} ${it.include ? "" : styles.off}`}>
+                  <div className={styles.pair}>
+                    <Crop src={src!} box={it.box} />
+                    {it.sample ? <SampleThumb sample={it.sample} size={72} /> : <div className={styles.empty}>획 없음</div>}
+                  </div>
+                  <div className={styles.itemRow}>
+                    <input className={styles.char} aria-label="글자" value={it.char} onChange={(e) => editChar(it.key, e.target.value)} />
+                    <label className={styles.include}>
+                      저장
+                      <input
+                        type="checkbox"
+                        className="switch"
+                        checked={it.include}
+                        disabled={!it.sample}
+                        onChange={(e) => setItems((p) => p!.map((x) => (x.key === it.key ? { ...x, include: e.target.checked } : x)))}
+                      />
+                    </label>
+                  </div>
+                  <button className="btn plain small block" onClick={() => setEditing(it.key)}>
+                    상자 고치기
+                  </button>
+                  {it.problem && <div className={styles.problem}>{it.problem}</div>}
+                </div>
+              ))}
+            </div>
+            <div className={styles.saveBar}>
+              <button className="btn primary" onClick={save} disabled={!included}>
+                <span className="tnum">{included}</span>자 저장
+              </button>
+              {spacing && (spacing.charGap !== null || spacing.wordGap !== null) && (
+                <button className="btn" onClick={applySpacing}>
+                  사진에서 잰 간격을 스타일에 적용
+                </button>
+              )}
+            </div>
+            {spacing && (spacing.charGap !== null || spacing.wordGap !== null) && (
+              <p className="section-footer tnum">
+                글자 간격 {spacing.charGap !== null ? (spacing.charGap * EM_FILL).toFixed(3) : "-"} · 띄어쓰기 {spacing.wordGap !== null ? (spacing.wordGap * EM_FILL).toFixed(2) : "-"} (칸 대비)
+              </p>
+            )}
+          </section>
+        )}
+
+        {editItem && src && proc && (
+          <div className={styles.overlay} onClick={(e) => e.target === e.currentTarget && setEditing(null)}>
+            <div className={styles.sheet} role="dialog" aria-modal="true" aria-label="상자 고치기">
+              <BoxEditor
+                key={editItem.key}
+                src={src}
+                rect={editItem.box}
+                others={items!.filter((x) => x.line === editItem.line && x.key !== editItem.key).map((x) => x.box)}
+                lineHeight={proc.lines[editItem.line].height}
+                char={editItem.char}
+                onApply={(r) => applyBox(editItem.key, r)}
+                onCancel={() => setEditing(null)}
+              />
+            </div>
+          </div>
+        )}
+      </main>
+    </>
   );
 }
 

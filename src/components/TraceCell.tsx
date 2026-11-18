@@ -153,7 +153,7 @@ export default function TraceCell({ char, masks, fields, strokes, onStroke, fail
     ctx.imageSmoothingEnabled = true;
     ctx.drawImage(bandImage(fields, bandWidth, failed), 0, 0, s, s);
     // 가운데 십자 보조선
-    ctx.strokeStyle = "#eee";
+    ctx.strokeStyle = "#e8e8ed";
     ctx.lineWidth = dpr;
     ctx.setLineDash([4 * dpr, 4 * dpr]);
     ctx.beginPath();
@@ -166,9 +166,6 @@ export default function TraceCell({ char, masks, fields, strokes, onStroke, fail
     const colors = [1, 2, 3].map((k) => [...JAMO_COLORS[k].glyph, 200] as [number, number, number, number]);
     drawColoredGlyph(ctx, masks, char, 0, 0, s, colors);
     drawStrokes(ctx, strokes, s);
-    ctx.strokeStyle = "#bbb";
-    ctx.lineWidth = dpr;
-    ctx.strokeRect(dpr / 2, dpr / 2, s - dpr, s - dpr);
   }, [char, masks, fields, strokes, failed, bandWidth, size]);
 
   useEffect(() => {
@@ -309,10 +306,10 @@ export default function TraceCell({ char, masks, fields, strokes, onStroke, fail
         WebkitUserSelect: "none",
         WebkitTouchCallout: "none",
         display: "block",
-        borderRadius: 6,
         cursor: trackpad ? "crosshair" : undefined,
         // 트랙패드 모드에서 펜이 내려가 있으면 테두리로 알려 준다
-        outline: trackpad && penDown ? "3px solid #e05a2b" : undefined,
+        outline: trackpad && penDown ? "3px solid var(--orange)" : undefined,
+        outlineOffset: -3,
       }}
       onPointerDown={onDown}
       onPointerMove={onMove}

@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import TraceCell from "@/components/TraceCell";
 import SampleThumb from "@/components/SampleThumb";
+import NavBar from "@/components/NavBar";
+import Icon from "@/components/Icon";
 import { compositionSet, frequentSet, latinSet } from "@/lib/hangul/charsets";
 import { isSyllable } from "@/lib/hangul";
 import { loadMasks, loadRefFont, labelsOf, isApproxLabels } from "@/lib/regions/client";
@@ -20,7 +22,7 @@ import styles from "./page.module.css";
 
 type SetKey = "composition" | "latin" | "frequent" | "retry" | "custom";
 const SET_LABELS: Record<Exclude<SetKey, "custom">, string> = {
-  composition: "조합용 (필수)",
+  composition: "조합용 · 필수",
   latin: "영문·숫자·기호",
   frequent: "자주 쓰는 한글",
   retry: "다시 쓰기",
@@ -183,234 +185,281 @@ export default function WritePage() {
   const retrySet = new Set(retry.map((r) => r.char));
   const customLeft = customList.filter((c) => !(counts.get(c) ?? 0));
 
+  const pct = list.length ? Math.round((done / list.length) * 100) : 0;
+
   return (
-    <main className={styles.main}>
-      <header className={styles.top}>
-        <Link href="/" className={styles.home}>
-          ‹ 처음
-        </Link>
-        <div className={styles.tabs}>
-          {(Object.keys(SET_LABELS) as Exclude<SetKey, "custom">[]).map((k) => (
-            <button
-              key={k}
-              className={k === setKey ? styles.active : ""}
-              onClick={() => {
-                setSetKey(k);
-                setIndex(0);
-              }}
-            >
-              {SET_LABELS[k]}
-              {k === "retry" ? ` ${retry.length}` : ""}
+    <>
+      <NavBar
+        title="따라 쓰기"
+        trail={
+          masks && fields && char ? (
+            <button className="btn plain small tnum" onClick={() => setShowList((v) => !v)} aria-expanded={showList}>
+              <Icon name={showList ? "list" : "grid"} />
+              {index + 1}/{list.length}
             </button>
-          ))}
-          {customList.length > 0 && (
-            <button className={setKey === "custom" ? styles.active : ""} onClick={() => { setSetKey("custom"); setIndex(0); }}>
-              없는 글자 {customList.length}
-            </button>
-          )}
-        </div>
-      </header>
-
-      <p className={styles.guide}>위치와 크기만 맞추고, 획 모양과 기울기는 평소 글씨대로.</p>
-      {customList.length > 0 && customLeft.length > 0 && (
-        <p className={styles.detail}>
-          변환할 글에 없던 글자 {customList.length}자 중 {customLeft.length}자 남았어요 ({customLeft.join(" ")}).{" "}
-          <Link href="/convert">변환 화면으로 돌아가기</Link>
-        </p>
-      )}
-      {customList.length > 0 && customLeft.length === 0 && (
-        <div className={styles.doneBanner}>
-          없던 글자를 모두 썼어요. <Link href="/convert">변환 화면으로 돌아가기 ›</Link>
-        </div>
-      )}
-
-      {!masks && <p>기준 글꼴을 불러오는 중…</p>}
-      {masks && !list.length && <p className={styles.empty}>{setKey === "retry" ? "다시 쓸 글자가 없어요." : "글자가 없어요."}</p>}
-
-      {masks && char && !fields && (
-        <div className={styles.fail}>
-          &lsquo;{char}&rsquo;은(는) 기준 글꼴에 없는 글자라 따라 쓰기 칸을 만들 수 없어요.{" "}
-          <button className={styles.link} onClick={() => go(index + 1)}>
-            건너뛰기
-          </button>
-        </div>
-      )}
-      {masks && fields && char && (
-        <>
-          <div className={styles.status}>
-            <button className={styles.listBtn} onClick={() => setShowList((v) => !v)}>
-              {index + 1} / {list.length} {showList ? "▲" : "▼"}
-            </button>
-            <span>
-              완료 {done}/{list.length}
-            </span>
-            <span className={styles.count}>이 글자 저장 {counts.get(char) ?? 0}벌</span>
-          </div>
-
-          {showList && (
-            <div className={styles.charList}>
-              {list.map((c, i) => (
-                <button
-                  key={c + i}
-                  className={[
-                    styles.chip,
-                    (counts.get(c) ?? 0) > 0 ? styles.chipDone : "",
-                    retrySet.has(c) ? styles.chipRetry : "",
-                    i === index ? styles.chipNow : "",
-                  ].join(" ")}
-                  onClick={() => {
-                    go(i);
-                    setShowList(false);
-                  }}
-                >
-                  {c}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {noTouch && (
-            <div className={styles.recommend}>
-              <b>글씨 등록은 아이패드나 휴대폰에서 하는 걸 추천해요.</b>
-              <br />
-              애플 펜슬이나 손가락으로 쓰는 게 실제 손글씨와 가장 비슷하게 나와요. 휴대폰·아이패드 사파리에서 이 주소를 열면 돼요:{" "}
-              <span className={styles.url}>{typeof window !== "undefined" ? window.location.origin + window.location.pathname : ""}</span>
-              <br />
-              맥북에서는 <Link href="/upload">사진 올리기</Link>와 <Link href="/convert">변환</Link>이 편해요. 등록한 글씨는 설정의 내보내기/가져오기로 옮길 수 있어요.
-            </div>
-          )}
-
-          <div className={styles.padBar}>
-            <label>
-              <input
-                type="checkbox"
-                checked={trackpad}
-                onChange={(e) => {
-                  setTrackpad(e.target.checked);
-                  setSetting("trackpadMode", e.target.checked);
+          ) : null
+        }
+      />
+      <main className={`page ${styles.main}`}>
+        <div className={styles.sets}>
+          <div className="segmented" role="group" aria-label="글자 묶음">
+            {(Object.keys(SET_LABELS) as Exclude<SetKey, "custom">[]).map((k) => (
+              <button
+                key={k}
+                aria-pressed={k === setKey}
+                onClick={() => {
+                  setSetKey(k);
+                  setIndex(0);
                 }}
-              />{" "}
-              트랙패드로 쓰기 (맥북, 어색할 수 있어요)
-            </label>
-            {trackpad && <span className={penDown ? styles.penOn : styles.penOff}>{penDown ? "● 펜 내림 (쓰는 중)" : "○ 펜 올림"}</span>}
-          </div>
-          {trackpad && (
-            <p className={styles.padGuide}>
-              칸 위에서 <b>스페이스 바를 누른 채</b> 트랙패드에서 손가락을 움직이면 써져요. 떼면 획이 끝나요.
-              <br />
-              또는 <b>톡</b> 한 번 → 쓰기 시작, 다시 <b>톡</b> → 멈춤. 누른 채 끌기(세 손가락 드래그 포함)도 돼요.
-            </p>
-          )}
-          {/* 칸 위: 글자 이동 */}
-          <div className={styles.navRow}>
-            <button onClick={() => go(index - 1)} disabled={index === 0}>
-              ‹ 이전
-            </button>
-            <span className={styles.navChar}>{char}</span>
-            <button onClick={() => go(index + 1)} disabled={index >= list.length - 1}>
-              건너뛰기 ›
-            </button>
-          </div>
-          <div className={styles.cellWrap}>
-            <TraceCell
-              char={char}
-              masks={masks}
-              fields={fields}
-              strokes={strokes}
-              onStroke={(s) => {
-                setResult(null);
-                setStrokes((prev) => [...prev, s]);
-              }}
-              failed={failed}
-              bandWidth={cfg.bandWidth}
-              size={size}
-              trackpad={trackpad}
-              onPenChange={setPenDown}
-            />
-            {toast && <div className={styles.toast}>{toast}</div>}
-          </div>
-          {/* 칸 아래: 획 고치기와 저장 */}
-          {!result && (
-            <div className={styles.row}>
-              <button onClick={() => setStrokes((p) => p.slice(0, -1))} disabled={!strokes.length}>
-                되돌리기
+              >
+                {SET_LABELS[k]}
+                {k === "retry" && <span className="count tnum">{retry.length}</span>}
               </button>
-              <button onClick={() => setStrokes([])} disabled={!strokes.length}>
-                지우기
+            ))}
+            {customList.length > 0 && (
+              <button aria-pressed={setKey === "custom"} onClick={() => { setSetKey("custom"); setIndex(0); }}>
+                없는 글자<span className="count tnum">{customList.length}</span>
               </button>
-              <button className={styles.primary} onClick={check} disabled={!strokes.length}>
-                확인·저장
-              </button>
+            )}
+          </div>
+        </div>
+
+        {masks && list.length > 0 && (
+          <div className={styles.progress}>
+            <div className={styles.progressText}>
+              <span>
+                완료 <b className="tnum">{done}</b>
+                <span className="tnum"> / {list.length}</span>
+              </span>
+              {char && <span className="tnum">&lsquo;{char}&rsquo; 저장 {counts.get(char) ?? 0}벌</span>}
             </div>
-          )}
+            <div className={styles.bar} role="progressbar" aria-valuenow={done} aria-valuemin={0} aria-valuemax={list.length}>
+              <div style={{ width: `${pct}%` }} />
+            </div>
+          </div>
+        )}
 
-          {isApproxLabels(masks, char) && (
-            <p className={styles.detail}>이 글자의 자모 영역은 지금 이 기기에서 계산했어요 (미리 확인하지 않은 글자).</p>
-          )}
-          {hangul && (
-            <p className={styles.legend}>
-              <span className={styles.l1}>초성</span>
-              <span className={styles.l2}>모음(중성)</span>
-              {fields.labels.includes(3) && <span className={styles.l3}>받침(종성)</span>}
-            </p>
-          )}
+        {customList.length > 0 && customLeft.length > 0 && (
+          <div className="notice info" style={{ marginTop: 12 }}>
+            변환할 글에 없던 글자 {customList.length}자 중 <b>{customLeft.length}자</b> 남았어요: {customLeft.join(" ")}{" "}
+            <Link href="/convert">변환으로 돌아가기</Link>
+          </div>
+        )}
+        {customList.length > 0 && customLeft.length === 0 && (
+          <div className="notice ok" style={{ marginTop: 12 }}>
+            <div className="notice-title">
+              <Icon name="ok" />
+              없던 글자를 모두 썼어요
+            </div>
+            <Link href="/convert">변환 화면으로 돌아가기</Link>
+          </div>
+        )}
 
-          {result && (
-            <div className={styles.fail}>
-              <strong>다시 써 주세요</strong>
-              <ul>
-                {describeFailure(result, hangul).map((m) => (
-                  <li key={m}>{m}</li>
+        {!masks && <p className={styles.empty}>기준 글꼴을 불러오는 중…</p>}
+        {masks && !list.length && <p className={styles.empty}>{setKey === "retry" ? "다시 쓸 글자가 없어요. 탈락한 글자를 '나중에'로 넘기면 여기에 모여요." : "글자가 없어요."}</p>}
+
+        {masks && char && !fields && (
+          <div className="notice warn" style={{ marginTop: 12 }}>
+            &lsquo;{char}&rsquo;은(는) 기준 글꼴에 없는 글자라 따라 쓰기 칸을 만들 수 없어요.{" "}
+            <button className="btn plain small" onClick={() => go(index + 1)}>
+              건너뛰기
+            </button>
+          </div>
+        )}
+        {masks && fields && char && (
+          <>
+            {showList && (
+              <div className={styles.charList}>
+                {list.map((c, i) => (
+                  <button
+                    key={c + i}
+                    className={[
+                      styles.chip,
+                      (counts.get(c) ?? 0) > 0 ? styles.chipDone : "",
+                      retrySet.has(c) ? styles.chipRetry : "",
+                      i === index ? styles.chipNow : "",
+                    ].join(" ")}
+                    onClick={() => {
+                      go(i);
+                      setShowList(false);
+                    }}
+                  >
+                    {c}
+                  </button>
                 ))}
-              </ul>
-              <p className={styles.detail}>
-                {result.jamo
-                  .map((j) => `${hangul ? LABEL_NAMES[j.label] : "글자"} 띠 안 ${Math.round(j.inBand * 100)}% · 덮임 ${Math.round(j.coverage * 100)}%`)
-                  .join(" / ")}
+              </div>
+            )}
+
+            {noTouch && (
+              <div className="notice info" style={{ marginTop: 12 }}>
+                <div className="notice-title">
+                  <Icon name="device" />
+                  글씨 등록은 아이패드나 휴대폰을 추천해요
+                </div>
+                애플 펜슬이나 손가락으로 써야 실제 손글씨와 가장 비슷하게 나와요. 휴대폰·아이패드 사파리에서 이 주소를 여세요:{" "}
+                <span className="mono" style={{ wordBreak: "break-all" }}>{typeof window !== "undefined" ? window.location.origin + window.location.pathname : ""}</span>
+                <br />
+                맥북에서는 <Link href="/upload">사진에서 가져오기</Link>와 <Link href="/convert">변환</Link>이 편해요. 등록한 글씨는 설정의 내보내기·가져오기로 옮길 수 있어요.
+              </div>
+            )}
+
+            {noTouch && (
+              <div className="group" style={{ marginTop: 12 }}>
+                <label className="cell">
+                  <span className="cell-main">
+                    트랙패드로 쓰기
+                    <span className="cell-sub">맥북용 · 어색할 수 있어요</span>
+                  </span>
+                  {trackpad && <span className={penDown ? styles.penOn : styles.penOff}>{penDown ? "쓰는 중" : "펜 올림"}</span>}
+                  <input
+                    type="checkbox"
+                    className="switch"
+                    checked={trackpad}
+                    onChange={(e) => {
+                      setTrackpad(e.target.checked);
+                      setSetting("trackpadMode", e.target.checked);
+                    }}
+                  />
+                </label>
+              </div>
+            )}
+            {trackpad && (
+              <p className="section-footer">
+                칸 위에서 <b>스페이스 바를 누른 채</b> 손가락을 움직이면 써지고, 떼면 획이 끝나요. 또는 <b>톡</b> 한 번에 쓰기 시작, 다시 <b>톡</b>에 멈춤. 누른 채 끌기(세 손가락 드래그 포함)도 돼요.
               </p>
-              <div className={styles.row}>
-                <button className={styles.primary} onClick={() => { setStrokes([]); setResult(null); }}>
-                  다시 쓰기
-                </button>
-                <button onClick={later}>나중에 (다시 쓰기 목록으로)</button>
-              </div>
-            </div>
-          )}
+            )}
 
-
-          {saved.length > 0 && (
-            <section className={styles.saved}>
-              <h2>저장된 &lsquo;{char}&rsquo; ({saved.length}벌) · 색은 자모 배정 결과</h2>
-              <div className={styles.thumbs}>
-                {saved.map((s) => (
-                  <div key={s.id} className={styles.thumb}>
-                    <SampleThumb sample={s} jamoColors={hangul} />
-                    <button
-                      onClick={async () => {
-                        if (!confirm(`이 '${char}' 한 벌을 지울까요?`)) return;
-                        await deleteSample(s.id);
-                        setSaved(await samplesOf(char));
-                        await refresh();
-                      }}
-                    >
-                      지우기
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {setKey === "retry" && retry.find((r) => r.char === char) && (
-            <p className={styles.detail}>
-              지난번 탈락 이유: {retry.find((r) => r.char === char)!.reasons.join(", ")}{" "}
-              <button className={styles.link} onClick={async () => { await removeRetry(char); await refresh(); }}>
-                목록에서 빼기
+            {/* 칸 위: 글자 이동 */}
+            <div className={styles.navRow}>
+              <button className="btn plain" onClick={() => go(index - 1)} disabled={index === 0}>
+                <Icon name="back" />
+                이전
               </button>
-            </p>
-          )}
-        </>
-      )}
-    </main>
+              <span className={styles.navChar}>{char}</span>
+              <button className="btn plain" onClick={() => go(index + 1)} disabled={index >= list.length - 1}>
+                건너뛰기
+                <Icon name="forward" />
+              </button>
+            </div>
+            <div className={styles.cellWrap}>
+              <div className={styles.paper}>
+                <TraceCell
+                  char={char}
+                  masks={masks}
+                  fields={fields}
+                  strokes={strokes}
+                  onStroke={(s) => {
+                    setResult(null);
+                    setStrokes((prev) => [...prev, s]);
+                  }}
+                  failed={failed}
+                  bandWidth={cfg.bandWidth}
+                  size={size}
+                  trackpad={trackpad}
+                  onPenChange={setPenDown}
+                />
+              </div>
+              {toast && (
+                <div className={styles.toast} role="status">
+                  <Icon name="check" />
+                  {toast}
+                </div>
+              )}
+            </div>
+            {hangul && (
+              <p className={styles.legend}>
+                <span className={styles.l1}>초성</span>
+                <span className={styles.l2}>모음</span>
+                {fields.labels.includes(3) && <span className={styles.l3}>받침</span>}
+              </p>
+            )}
+            {/* 칸 아래: 획 고치기와 저장 */}
+            {!result && (
+              <div className={styles.actions}>
+                <button className="btn gray" onClick={() => setStrokes((p) => p.slice(0, -1))} disabled={!strokes.length}>
+                  <Icon name="undo" />
+                  되돌리기
+                </button>
+                <button className="btn gray" onClick={() => setStrokes([])} disabled={!strokes.length}>
+                  <Icon name="clear" />
+                  지우기
+                </button>
+                <button className="btn primary" onClick={check} disabled={!strokes.length}>
+                  <Icon name="check" />
+                  확인 · 저장
+                </button>
+              </div>
+            )}
+
+            {result && (
+              <div className="notice error" style={{ marginTop: 12 }}>
+                <div className="notice-title">
+                  <Icon name="warn" />
+                  다시 써 주세요
+                </div>
+                <ul className={styles.reasons}>
+                  {describeFailure(result, hangul).map((m) => (
+                    <li key={m}>{m}</li>
+                  ))}
+                </ul>
+                <p className="footnote tnum">
+                  {result.jamo
+                    .map((j) => `${hangul ? LABEL_NAMES[j.label] : "글자"} 띠 안 ${Math.round(j.inBand * 100)}% · 덮임 ${Math.round(j.coverage * 100)}%`)
+                    .join(" / ")}
+                </p>
+                <div className="btn-row" style={{ marginTop: 10 }}>
+                  <button className="btn primary" onClick={() => { setStrokes([]); setResult(null); }}>
+                    다시 쓰기
+                  </button>
+                  <button className="btn gray" onClick={later}>
+                    나중에
+                  </button>
+                </div>
+                <p className="footnote" style={{ marginTop: 6 }}>나중에를 누르면 &lsquo;다시 쓰기&rsquo; 목록에 넣고 다음 글자로 넘어가요.</p>
+              </div>
+            )}
+
+            {isApproxLabels(masks, char) && (
+              <p className="section-footer" style={{ textAlign: "center" }}>이 글자의 자모 영역은 지금 이 기기에서 계산했어요 (미리 확인하지 않은 글자).</p>
+            )}
+
+            {saved.length > 0 && (
+              <section className="section">
+                <h2 className="section-header">
+                  저장된 &lsquo;{char}&rsquo; {saved.length}벌 · 색은 자모 배정 결과
+                </h2>
+                <div className={`group-pad ${styles.thumbs}`}>
+                  {saved.map((s) => (
+                    <div key={s.id} className={styles.thumb}>
+                      <SampleThumb sample={s} jamoColors={hangul} />
+                      <button
+                        className="btn plain small destructive"
+                        onClick={async () => {
+                          if (!confirm(`이 '${char}' 한 벌을 지울까요?`)) return;
+                          await deleteSample(s.id);
+                          setSaved(await samplesOf(char));
+                          await refresh();
+                        }}
+                      >
+                        지우기
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {setKey === "retry" && retry.find((r) => r.char === char) && (
+              <p className="section-footer">
+                지난번 탈락 이유: {retry.find((r) => r.char === char)!.reasons.join(", ")}{" "}
+                <button className="btn plain small" onClick={async () => { await removeRetry(char); await refresh(); }}>
+                  목록에서 빼기
+                </button>
+              </p>
+            )}
+          </>
+        )}
+      </main>
+    </>
   );
 }

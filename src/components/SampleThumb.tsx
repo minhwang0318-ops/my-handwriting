@@ -52,5 +52,5 @@ export default function SampleThumb({
     }
     ctx.restore();
   }, [sample, size, jamoColors, refFrame]);
-  return <canvas ref={ref} style={{ width: size, height: size, border: "1px solid #ddd", borderRadius: 4, display: "block" }} />;
+  return <canvas ref={ref} style={{ width: size, height: size, borderRadius: 8, boxShadow: "0 0 0 0.5px var(--separator)", display: "block" }} />;
 }

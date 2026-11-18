@@ -14,15 +14,17 @@ export default function DevTools() {
   const [msg, setMsg] = useState("");
   if (process.env.NODE_ENV !== "development") return null;
   return (
-    <section style={{ marginTop: 32, padding: 12, border: "1px dashed #bbb", borderRadius: 8, fontSize: 14 }}>
-      <strong>개발용</strong>
-      <p style={{ margin: "6px 0" }}>
+    <section className="section">
+      <h2 className="section-header">개발용</h2>
+      <div className="group-pad footnote">
+      <p style={{ marginBottom: 10 }}>
         시험 데이터 1: 가·나·다·라·마·아·이·고·. 9자 × 2벌 (좌표로 만든 단순한 획)
         <br />
         시험 데이터 2: 등록 글자 473자 (기준 글꼴 뼈대를 자모마다 조금씩 비튼 획 — 조합 위치 계산 확인용)
         <br />둘 다 진짜 손글씨가 아닙니다. 지우기는 둘 다 지웁니다.
       </p>
       <button
+        className="btn small gray"
         onClick={async () => {
           const d = await db();
           for (const s of fakeSamples()) await d.put("samples", s);
@@ -33,6 +35,7 @@ export default function DevTools() {
         시험 데이터 넣기
       </button>{" "}
       <button
+        className="btn small gray"
         onClick={async () => {
           setMsg("불러오는 중…");
           const res = await fetch(asset("/dev/skeleton-samples.json"));
@@ -51,6 +54,7 @@ export default function DevTools() {
         글꼴 뼈대 시험 데이터 넣기 (473자)
       </button>{" "}
       <button
+        className="btn small gray"
         onClick={async () => {
           const all = await allSamples();
           const test = all.filter((s) => s.id.startsWith("test-"));
@@ -60,7 +64,8 @@ export default function DevTools() {
       >
         시험 데이터 지우기
       </button>
-      {msg && <p>{msg}</p>}
+      {msg && <p style={{ marginTop: 8 }}>{msg}</p>}
+      </div>
     </section>
   );
 }
