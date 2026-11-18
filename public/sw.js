@@ -25,7 +25,7 @@ self.addEventListener("install", (e) => {
   e.waitUntil(
     (async () => {
       const c = await caches.open(CACHE);
-      await c.addAll(CORE);
+      await c.addAll(CORE.map((u) => new Request(u, { cache: "reload" })));
       // 각 화면 HTML이 불러오는 /_next/static 파일(JS·CSS)도 미리 받아 둔다.
       // 그래야 한 번도 열어 보지 않은 화면도 오프라인에서 열린다.
       const assets = new Set();
@@ -61,7 +61,8 @@ async function cacheFirst(req) {
 
 async function networkFirst(req) {
   try {
-    const res = await fetch(req);
+    // 브라우저 HTTP 캐시(GitHub Pages는 10분)를 건너뛰고 서버에 새 버전이 있는지 확인한다
+    const res = await fetch(req, { cache: "no-cache" });
     if (res.ok) (await caches.open(CACHE)).put(req, res.clone());
     return res;
   } catch {
