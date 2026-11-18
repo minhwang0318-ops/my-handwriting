@@ -1,0 +1,129 @@
+.main {
+  padding: 12px 16px 48px;
+  max-width: 720px;
+  margin: 0 auto;
+}
+.main h1 {
+  font-size: 1.3rem;
+  margin: 8px 0 12px;
+}
+.home {
+  text-decoration: none;
+  color: #555;
+  font-size: 0.95rem;
+}
+.card {
+  background: #fff;
+  border: 1px solid #e3e3e3;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+.card h2 {
+  font-size: 1.05rem;
+  margin: 0 0 4px;
+}
+.small {
+  font-size: 0.8rem;
+  color: #666;
+}
+.previewBox {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #fff;
+  padding: 6px 0 8px;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 8px;
+}
+.preview {
+  display: block;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 6px;
+}
+.row button,
+.reset,
+.danger,
+.primary {
+  min-height: 40px;
+  padding: 6px 14px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  background: #fff;
+}
+.primary {
+  background: #1c2040;
+  border-color: #1c2040;
+  color: #fff;
+}
+.danger {
+  margin-top: 14px;
+  border-color: #d99;
+  color: #a22;
+}
+button:disabled {
+  opacity: 0.4;
+}
+.text {
+  flex: 1;
+  min-width: 180px;
+  font-size: 16px;
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+.group {
+  border-top: 1px solid #eee;
+  padding: 8px 0;
+}
+.group summary {
+  cursor: pointer;
+  padding: 4px 0;
+}
+.fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px 16px;
+  margin: 8px 0;
+}
+.slider {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.88rem;
+}
+.slider input[type="range"] {
+  width: 100%;
+  height: 28px;
+}
+.sliderTop {
+  display: flex;
+  justify-content: space-between;
+}
+.reset {
+  margin-top: 6px;
+}
+.importBox {
+  margin-top: 12px;
+  padding: 8px 10px;
+  border: 1px dashed #ccc;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+.importBox input[type="file"] {
+  margin-top: 8px;
+}
+.msg {
+  margin-top: 10px;
+  padding: 8px 10px;
+  background: #f1f6ff;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
