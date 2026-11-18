@@ -13,7 +13,7 @@ import { assignStrokes } from "@/lib/strokes/assign";
 import { validate, describeFailure, DEFAULT_VALIDATE, mergeValidate, LABEL_NAMES, type ValidationResult, type ValidateConfig } from "@/lib/strokes/validate";
 import type { Sample, Stroke } from "@/lib/strokes/types";
 import {
-  saveSample, samplesOf, sampleCounts, retryList, addRetry, removeRetry, deleteSample, newId, getSetting,
+  saveSample, samplesOf, sampleCounts, retryList, addRetry, removeRetry, deleteSample, newId, getSetting, setSetting,
   type RetryEntry,
 } from "@/lib/store/db";
 import styles from "./page.module.css";
@@ -61,6 +61,8 @@ export default function WritePage() {
   const [showList, setShowList] = useState(false);
   const [toast, setToast] = useState("");
   const [cfg, setCfg] = useState<ValidateConfig>(DEFAULT_VALIDATE);
+  const [trackpad, setTrackpad] = useState(false);
+  const [penDown, setPenDown] = useState(false);
   const size = useCellSize();
 
   // 주소의 ?chars=... 로 들어오면 그 글자들만 쓴다 (변환 화면의 "지금 쓰기"용)
@@ -74,6 +76,11 @@ export default function WritePage() {
       const m = await loadMasks();
       await loadRefFont(m.frame);
       setCfg(mergeValidate(await getSetting<unknown>("validateConfig", null)));
+      // 트랙패드 모드: 저장된 값이 없으면, 터치가 없고 마우스·트랙패드만 있는 기기(맥북 등)에서 켠다
+      const savedPad = await getSetting<boolean | null>("trackpadMode", null);
+      setTrackpad(
+        savedPad ?? (window.matchMedia("(hover: hover) and (pointer: fine)").matches && navigator.maxTouchPoints === 0),
+      );
       setMasks(m);
     })();
   }, []);
@@ -262,6 +269,27 @@ export default function WritePage() {
             </div>
           )}
 
+          <div className={styles.padBar}>
+            <label>
+              <input
+                type="checkbox"
+                checked={trackpad}
+                onChange={(e) => {
+                  setTrackpad(e.target.checked);
+                  setSetting("trackpadMode", e.target.checked);
+                }}
+              />{" "}
+              트랙패드로 쓰기 (맥북)
+            </label>
+            {trackpad && <span className={penDown ? styles.penOn : styles.penOff}>{penDown ? "● 펜 내림 (쓰는 중)" : "○ 펜 올림"}</span>}
+          </div>
+          {trackpad && (
+            <p className={styles.padGuide}>
+              칸 위에서 <b>스페이스 바를 누른 채</b> 트랙패드에서 손가락을 움직이면 써져요. 떼면 획이 끝나요.
+              <br />
+              또는 <b>톡</b> 한 번 → 쓰기 시작, 다시 <b>톡</b> → 멈춤. 누른 채 끌기(세 손가락 드래그 포함)도 돼요.
+            </p>
+          )}
           <div className={styles.cellWrap}>
             <TraceCell
               char={char}
@@ -275,6 +303,8 @@ export default function WritePage() {
               failed={failed}
               bandWidth={cfg.bandWidth}
               size={size}
+              trackpad={trackpad}
+              onPenChange={setPenDown}
             />
             {toast && <div className={styles.toast}>{toast}</div>}
           </div>

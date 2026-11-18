@@ -215,3 +215,26 @@
 .doneBanner a {
   margin-left: 6px;
 }
+.padBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.88rem;
+  margin: 4px 0;
+}
+.penOn {
+  color: #e05a2b;
+  font-weight: 700;
+}
+.penOff {
+  color: #888;
+}
+.padGuide {
+  font-size: 0.85rem;
+  background: #f1f6ff;
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin: 4px 0 6px;
+  line-height: 1.5;
+}

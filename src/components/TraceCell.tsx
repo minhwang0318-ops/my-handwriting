@@ -1,10 +1,11 @@
 "use client";
 // 따라 쓰기 칸: 희미한 기준 글자(자모별 색) + 허용 띠 + 펜 입력
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { JamoMasksFile } from "@/lib/regions/types";
 import { drawColoredGlyph } from "@/lib/regions/client";
 import type { JamoFields } from "@/lib/strokes/fields";
 import type { Point, PointerKind, Stroke } from "@/lib/strokes/types";
+import { TrackpadPen, type PadPoint } from "@/lib/strokes/trackpad";
 
 // 자모 색: [허용 띠, 기준 글자]
 export const JAMO_COLORS: Record<number, { band: [number, number, number]; glyph: [number, number, number] }> = {
@@ -26,6 +27,10 @@ interface Props {
   bandWidth: number;
   size: number;
   disabled?: boolean;
+  /** 맥북 트랙패드 모드: 스페이스를 누른 동안 또는 톡-톡 사이에는 버튼 없이 움직여도 그려진다 (마우스 포인터에만) */
+  trackpad?: boolean;
+  /** 펜이 내려갔는지 (트랙패드 모드 안내용) */
+  onPenChange?: (down: boolean) => void;
 }
 
 /** 획 굵기: 펜은 필압, 그 외는 일정 */
@@ -93,11 +98,47 @@ function bandImage(fields: JamoFields, bandWidth: number, failed: number[]): HTM
   return cv;
 }
 
-export default function TraceCell({ char, masks, fields, strokes, onStroke, failed = [], bandWidth, size, disabled }: Props) {
+export default function TraceCell({ char, masks, fields, strokes, onStroke, failed = [], bandWidth, size, disabled, trackpad = false, onPenChange }: Props) {
   const ref = useRef<HTMLCanvasElement>(null);
   const live = useRef<{ stroke: Stroke; id: number; t0: number } | null>(null);
   const penSeen = useRef(false);
   const firstStart = useRef<number | null>(null);
+  const hover = useRef(false);
+  const [penDown, setPenDown] = useState(false);
+  const cbRef = useRef({ onStroke, onPenChange, disabled });
+  cbRef.current = { onStroke, onPenChange, disabled };
+
+  // 트랙패드 펜: 시작·추가·끝을 live 획으로 옮긴다
+  const pad = useRef<TrackpadPen | null>(null);
+  if (!pad.current) {
+    pad.current = new TrackpadPen({
+      start: (p: PadPoint) => {
+        if (firstStart.current === null) firstStart.current = p.t;
+        const stroke: Stroke = { points: [], pointer: "mouse", start: Math.round(p.t - firstStart.current) };
+        live.current = { stroke, id: -1, t0: p.t };
+        stroke.points.push({ x: p.x, y: p.y, p: 0.5, t: 0 });
+        paintLiveRef.current(0);
+        setPenDown(true);
+        cbRef.current.onPenChange?.(true);
+      },
+      add: (p: PadPoint) => {
+        const l = live.current;
+        if (!l) return;
+        const last = l.stroke.points[l.stroke.points.length - 1];
+        if (last && Math.hypot(p.x - last.x, p.y - last.y) < 0.0015) return;
+        const from = l.stroke.points.length;
+        l.stroke.points.push({ x: p.x, y: p.y, p: 0.5, t: Math.round(p.t - l.t0) });
+        paintLiveRef.current(from);
+      },
+      end: () => {
+        const l = live.current;
+        live.current = null;
+        setPenDown(false);
+        cbRef.current.onPenChange?.(false);
+        if (l && l.stroke.points.length) cbRef.current.onStroke(l.stroke);
+      },
+    });
+  }
 
   const redraw = useCallback(() => {
     const cv = ref.current;
@@ -136,7 +177,31 @@ export default function TraceCell({ char, masks, fields, strokes, onStroke, fail
 
   useEffect(() => {
     firstStart.current = null;
+    pad.current?.cancel();
   }, [char]);
+
+  // 트랙패드 모드: 칸 위에 커서가 있을 때 스페이스 = 펜 내림, Esc = 펜 올림
+  useEffect(() => {
+    if (!trackpad) return;
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "Escape") pad.current?.cancel();
+      if (e.code !== "Space" || !hover.current || cbRef.current.disabled) return;
+      e.preventDefault(); // 페이지 스크롤·버튼 눌림 막기
+      if (!e.repeat) pad.current?.spaceDown();
+    };
+    const up = (e: KeyboardEvent) => {
+      if (e.code !== "Space") return;
+      if (pad.current?.source === "space") e.preventDefault();
+      pad.current?.spaceUp();
+    };
+    window.addEventListener("keydown", down);
+    window.addEventListener("keyup", up);
+    return () => {
+      window.removeEventListener("keydown", down);
+      window.removeEventListener("keyup", up);
+      pad.current?.cancel();
+    };
+  }, [trackpad]);
   useEffect(() => {
     if (!strokes.length) firstStart.current = null;
   }, [strokes.length]);
@@ -153,6 +218,12 @@ export default function TraceCell({ char, masks, fields, strokes, onStroke, fail
   };
 
   const onDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (isPad(e)) {
+      if (disabled || e.button !== 0) return;
+      e.preventDefault();
+      pad.current!.pointerDown(padPoint(e.nativeEvent));
+      return;
+    }
     if (disabled || live.current) return;
     if (e.pointerType === "pen") penSeen.current = true;
     // 펜을 쓰는 중에는 손바닥(터치) 입력을 무시
@@ -173,6 +244,7 @@ export default function TraceCell({ char, masks, fields, strokes, onStroke, fail
     paintLive(0);
   };
 
+  const paintLiveRef = useRef<(from: number) => void>(() => {});
   const paintLive = (from: number) => {
     const cv = ref.current;
     const l = live.current;
@@ -186,8 +258,21 @@ export default function TraceCell({ char, masks, fields, strokes, onStroke, fail
     drawStrokeFrom(ctx, l.stroke, from, cv.width, 0, 0);
     ctx.restore();
   };
+  paintLiveRef.current = paintLive;
+
+  const padPoint = (e: PointerEvent): PadPoint => {
+    const r = ref.current!.getBoundingClientRect();
+    return { x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height, t: e.timeStamp };
+  };
+  const isPad = (e: React.PointerEvent) => trackpad && e.pointerType === "mouse";
 
   const onMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    hover.current = true;
+    if (isPad(e)) {
+      const evs = e.nativeEvent.getCoalescedEvents?.() ?? [];
+      for (const ev of evs.length ? evs : [e.nativeEvent]) pad.current!.move(padPoint(ev));
+      return;
+    }
     const l = live.current;
     if (!l || e.pointerId !== l.id) return;
     e.preventDefault();
@@ -203,6 +288,10 @@ export default function TraceCell({ char, masks, fields, strokes, onStroke, fail
   };
 
   const onUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (isPad(e)) {
+      pad.current!.pointerUp(padPoint(e.nativeEvent));
+      return;
+    }
     const l = live.current;
     if (!l || e.pointerId !== l.id) return;
     live.current = null;
@@ -221,11 +310,19 @@ export default function TraceCell({ char, masks, fields, strokes, onStroke, fail
         WebkitTouchCallout: "none",
         display: "block",
         borderRadius: 6,
+        cursor: trackpad ? "crosshair" : undefined,
+        // 트랙패드 모드에서 펜이 내려가 있으면 테두리로 알려 준다
+        outline: trackpad && penDown ? "3px solid #e05a2b" : undefined,
       }}
       onPointerDown={onDown}
       onPointerMove={onMove}
       onPointerUp={onUp}
       onPointerCancel={onUp}
+      onPointerEnter={() => (hover.current = true)}
+      onPointerLeave={(e) => {
+        hover.current = false;
+        if (isPad(e)) pad.current!.cancel(); // 펜 내린 채 칸 밖으로 나가면 획을 끝낸다
+      }}
       onContextMenu={(e) => e.preventDefault()}
     />
   );
