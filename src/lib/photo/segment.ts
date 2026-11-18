@@ -231,3 +231,13 @@ export function measureSpacing(boxes: Box[], charH: number, spaceAfter: boolean[
   }
   return { charGap: gaps.length ? median(gaps) : null, wordGap: words.length ? median(words) : null, nGaps: gaps.length, nWords: words.length };
 }
+
+/** 손으로 고친 사각형: 그 안에 잉크가 걸친 덩어리 번호를 모두 모은다 */
+export function boxFromRect(labels: Int32Array, w: number, x0: number, y0: number, x1: number, y1: number): Box {
+  const ids = new Set<number>();
+  for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
+    const l = labels[y * w + x];
+    if (l) ids.add(l);
+  }
+  return { x0, y0, x1, y1, comps: [...ids] };
+}

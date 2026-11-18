@@ -238,3 +238,26 @@
   margin: 4px 0 6px;
   line-height: 1.5;
 }
+.navRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 6px 0 4px;
+}
+.navRow button {
+  min-height: 44px;
+  min-width: 96px;
+  padding: 8px 14px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 0.95rem;
+}
+.navRow button:disabled {
+  opacity: 0.4;
+}
+.navChar {
+  font-size: 1.6rem;
+  font-weight: 700;
+}

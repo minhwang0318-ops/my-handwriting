@@ -40,7 +40,7 @@ function fieldsFor(masks: JamoMasksFile, ch: string): JamoFields | null {
 function useCellSize() {
   const [size, setSize] = useState(320);
   useEffect(() => {
-    const f = () => setSize(Math.max(220, Math.min(window.innerWidth - 32, window.innerHeight - 330, 560)));
+    const f = () => setSize(Math.max(220, Math.min(window.innerWidth - 32, window.innerHeight - 390, 560)));
     f();
     window.addEventListener("resize", f);
     return () => window.removeEventListener("resize", f);
@@ -290,6 +290,16 @@ export default function WritePage() {
               또는 <b>톡</b> 한 번 → 쓰기 시작, 다시 <b>톡</b> → 멈춤. 누른 채 끌기(세 손가락 드래그 포함)도 돼요.
             </p>
           )}
+          {/* 칸 위: 글자 이동 */}
+          <div className={styles.navRow}>
+            <button onClick={() => go(index - 1)} disabled={index === 0}>
+              ‹ 이전
+            </button>
+            <span className={styles.navChar}>{char}</span>
+            <button onClick={() => go(index + 1)} disabled={index >= list.length - 1}>
+              건너뛰기 ›
+            </button>
+          </div>
           <div className={styles.cellWrap}>
             <TraceCell
               char={char}
@@ -308,6 +318,20 @@ export default function WritePage() {
             />
             {toast && <div className={styles.toast}>{toast}</div>}
           </div>
+          {/* 칸 아래: 획 고치기와 저장 */}
+          {!result && (
+            <div className={styles.row}>
+              <button onClick={() => setStrokes((p) => p.slice(0, -1))} disabled={!strokes.length}>
+                되돌리기
+              </button>
+              <button onClick={() => setStrokes([])} disabled={!strokes.length}>
+                지우기
+              </button>
+              <button className={styles.primary} onClick={check} disabled={!strokes.length}>
+                확인·저장
+              </button>
+            </div>
+          )}
 
           {isApproxLabels(masks, char) && (
             <p className={styles.detail}>이 글자의 자모 영역은 지금 이 기기에서 계산했어요 (미리 확인하지 않은 글자).</p>
@@ -342,25 +366,6 @@ export default function WritePage() {
             </div>
           )}
 
-          {!result && (
-            <div className={styles.row}>
-              <button onClick={() => setStrokes((p) => p.slice(0, -1))} disabled={!strokes.length}>
-                되돌리기
-              </button>
-              <button onClick={() => setStrokes([])} disabled={!strokes.length}>
-                지우기
-              </button>
-              <button onClick={() => go(index - 1)} disabled={index === 0}>
-                이전
-              </button>
-              <button onClick={() => go(index + 1)} disabled={index >= list.length - 1}>
-                건너뛰기
-              </button>
-              <button className={styles.primary} onClick={check} disabled={!strokes.length}>
-                확인·저장
-              </button>
-            </div>
-          )}
 
           {saved.length > 0 && (
             <section className={styles.saved}>

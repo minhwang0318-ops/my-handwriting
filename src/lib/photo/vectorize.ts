@@ -38,7 +38,7 @@ export function boxToStrokes(
     for (let x = 0; x < cw; x++) {
       const gx = x0 + x;
       const gy = y0 + y;
-      if (gx < box.x0 || gx >= box.x1) continue; // 나눈 상자는 x 범위로 자른다
+      if (gx < box.x0 || gx >= box.x1 || gy < box.y0 || gy >= box.y1) continue; // 상자 사각형 밖은 버린다 (나누거나 손으로 고친 상자)
       const i = gy * mask.w + gx;
       if (i < labels.length && ids.has(labels[i])) crop[y * cw + x] = 1;
     }

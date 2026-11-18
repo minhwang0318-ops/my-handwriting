@@ -5,8 +5,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import SampleThumb from "@/components/SampleThumb";
+import BoxEditor, { type Rect } from "@/components/BoxEditor";
 import { toGray, adaptiveThreshold, removeLongLines, connectedComponents, type BinMask } from "@/lib/photo/image";
-import { filterNoise, findLines, groupChars, fitBoxes, splitByColumn, textChars, measureSpacing, type Box } from "@/lib/photo/segment";
+import { filterNoise, findLines, groupChars, fitBoxes, splitByColumn, textChars, measureSpacing, boxFromRect, type Box } from "@/lib/photo/segment";
 import { boxToStrokes, EM_FILL } from "@/lib/photo/vectorize";
 import { loadMasks, loadRefFont, labelsOf } from "@/lib/regions/client";
 import type { JamoMasksFile } from "@/lib/regions/types";
@@ -82,6 +83,7 @@ export default function UploadPage() {
   const [items, setItems] = useState<Item[] | null>(null);
   const [spacing, setSpacing] = useState<{ charGap: number | null; wordGap: number | null } | null>(null);
   const [msg, setMsg] = useState("");
+  const [editing, setEditing] = useState<string | null>(null);
   const viewRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -218,6 +220,20 @@ export default function UploadPage() {
     );
   };
 
+  const applyBox = (key: string, r: Rect) => {
+    if (!proc || !masks) return;
+    setItems((prev) =>
+      prev!.map((it) => {
+        if (it.key !== key) return it;
+        const box = boxFromRect(proc.labels, proc.mask.w, r.x0, r.y0, r.x1, r.y1);
+        return makeItem(key, it.line, box, it.char, proc, proc.lines[it.line], masks, cfg);
+      }),
+    );
+    setEditing(null);
+  };
+
+  const editItem = items?.find((it) => it.key === editing) ?? null;
+
   const save = async () => {
     const chosen = items?.filter((it) => it.include && it.sample) ?? [];
     if (!chosen.length) return;
@@ -316,6 +332,9 @@ export default function UploadPage() {
                     저장
                   </label>
                 </div>
+                <button className={styles.editBtn} onClick={() => setEditing(it.key)}>
+                  상자 고치기
+                </button>
                 {it.problem && <div className={styles.problem}>{it.problem}</div>}
               </div>
             ))}
@@ -334,6 +353,23 @@ export default function UploadPage() {
         </section>
       )}
       {msg && <p className={styles.msg}>{msg}</p>}
+
+      {editItem && src && proc && (
+        <div className={styles.overlay} onClick={(e) => e.target === e.currentTarget && setEditing(null)}>
+          <div className={styles.sheet}>
+            <BoxEditor
+              key={editItem.key}
+              src={src}
+              rect={editItem.box}
+              others={items!.filter((x) => x.line === editItem.line && x.key !== editItem.key).map((x) => x.box)}
+              lineHeight={proc.lines[editItem.line].height}
+              char={editItem.char}
+              onApply={(r) => applyBox(editItem.key, r)}
+              onCancel={() => setEditing(null)}
+            />
+          </div>
+        </div>
+      )}
     </main>
   );
 }

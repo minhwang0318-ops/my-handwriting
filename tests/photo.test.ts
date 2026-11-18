@@ -139,3 +139,19 @@ describe("글자 짝 짓기 (동적 계획법)", () => {
     expect(out.map((b) => b.comps)).toEqual([[1], [2, 3], [4], [5]]);
   });
 });
+
+describe("손으로 고친 상자", () => {
+  it("사각형 안 덩어리를 모으고, 사각형 밖 잉크는 획에 넣지 않는다", async () => {
+    const { boxFromRect } = await import("@/lib/photo/segment");
+    const { m, rect } = canvas(80, 40);
+    rect(5, 5, 15, 35); // 덩어리 A
+    rect(20, 5, 60, 10); // 덩어리 B (가로로 김)
+    const { labels } = connectedComponents(m);
+    const b = boxFromRect(labels, 80, 0, 0, 30, 40); // A 전체 + B 왼쪽 일부
+    expect(b.comps.length).toBe(2);
+    const strokes = boxToStrokes(m, labels, b, { height: 30, cy: 20 });
+    const maxX = Math.max(...strokes.flatMap((s) => s.points.map((p) => p.x)));
+    // B는 x=30에서 잘리므로, 칸 좌표로 상자 오른쪽 끝(중심+15px) 근처를 넘지 않는다
+    expect(maxX).toBeLessThanOrEqual(0.5 + (15 / 30) * EM_FILL + 0.01);
+  });
+});
