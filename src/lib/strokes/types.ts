@@ -34,6 +34,8 @@ export interface Sample {
   createdAt: number;
   /** 필압이 있는 입력(펜)으로 썼는지 */
   hasPressure: boolean;
+  /** 어디서 왔는지: 따라 쓰기(없으면 이것) / 사진에서 가져옴 */
+  source?: "trace" | "photo";
 }
 
 export const hasRealPressure = (s: Stroke) => s.pointer === "pen";

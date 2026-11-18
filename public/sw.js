@@ -7,7 +7,7 @@ const VERSION = "v5";
 // 하위 경로(예: GitHub Pages의 /my-handwriting)에서도 돌도록 등록 범위에서 접두사를 얻는다
 const BASE = new URL(self.registration.scope).pathname.replace(/\/$/, "");
 const CACHE = `hw-${VERSION}`;
-const PAGES = ["/", "/write/", "/convert/", "/compare/", "/settings/"].map((p) => BASE + p);
+const PAGES = ["/", "/write/", "/upload/", "/convert/", "/compare/", "/settings/"].map((p) => BASE + p);
 const CORE = [
   ...PAGES,
   ...[

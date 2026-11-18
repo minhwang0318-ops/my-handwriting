@@ -11,6 +11,9 @@ export default function Home() {
           <Link href="/write">내 글씨 등록하기 (따라 쓰기)</Link>
         </li>
         <li>
+          <Link href="/upload">사진에서 내 글씨 가져오기 (예전 편지·레포트)</Link>
+        </li>
+        <li>
           <Link href="/convert">내 글씨로 바꾸기</Link>
         </li>
         <li>
